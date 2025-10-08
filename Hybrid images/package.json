@@ -1,0 +1,22 @@
+{
+  "name": "hybrid-images-glsl",
+  "version": "1.0.0",
+  "description": "Hybrid Images implementation using WebGL and GLSL shaders",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000 -c-1 --cors",
+    "dev": "npx http-server -p 8000 -c-1 --cors -o"
+  },
+  "keywords": [
+    "webgl",
+    "glsl",
+    "hybrid-images",
+    "image-processing",
+    "computer-vision"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

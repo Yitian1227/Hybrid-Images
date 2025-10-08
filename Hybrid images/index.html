@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Images - GLSL Implementation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffffff;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        label {
+            font-size: 14px;
+            color: #cccccc;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+        }
+        
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+        
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        canvas {
+            border: 2px solid #444;
+            border-radius: 8px;
+            width: 800px;
+            height: 600px;
+            background: #333;
+            display: block;
+        }
+        
+        .info {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        .view-toggle {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .view-toggle button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .view-toggle button.active {
+            background: #007acc;
+            border-color: #007acc;
+        }
+        
+        .upload-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+        
+        .upload-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .upload-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .upload-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .upload-group label {
+            font-size: 14px;
+            color: #cccccc;
+            font-weight: bold;
+        }
+        
+        .upload-group input[type="file"] {
+            padding: 8px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .upload-group span {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+        }
+        
+        #loadUploadedImages {
+            padding: 12px 24px;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            align-self: flex-start;
+        }
+        
+        #loadUploadedImages:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hybrid Images with GLSL</h1>
+        
+        <div class="view-toggle">
+            <button id="hybridView" class="active">Hybrid View</button>
+            <button id="lowPassView">Low-Pass Filter</button>
+            <button id="highPassView">High-Pass Filter</button>
+            <button id="originalView">Original Images</button>
+        </div>
+        
+        <div class="upload-section">
+            <h3>Upload Your Images</h3>
+            <div class="upload-controls">
+                <div class="upload-group">
+                    <label for="lowPassUpload">Low-Pass Source (will be blurred):</label>
+                    <input type="file" id="lowPassUpload" accept="image/*">
+                    <span id="lowPassFileName">No file selected</span>
+                </div>
+                <div class="upload-group">
+                    <label for="highPassUpload">High-Pass Source (edges enhanced):</label>
+                    <input type="file" id="highPassUpload" accept="image/*">
+                    <span id="highPassFileName">No file selected</span>
+                </div>
+                <button id="loadUploadedImages" disabled>Load Uploaded Images</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="blendFactor">Blend Factor</label>
+                <input type="range" id="blendFactor" min="0" max="1" step="0.01" value="0.5">
+                <input type="number" id="blendValue" value="0.5" step="0.01" min="0" max="1">
+            </div>
+            
+            <div class="control-group">
+                <label for="blurIterations">Blur Iterations</label>
+                <input type="range" id="blurIterations" min="1" max="10" step="1" value="3">
+                <input type="number" id="blurValue" value="3" min="1" max="10">
+            </div>
+            
+            <div class="control-group">
+                <label for="lowPassStrength">Low-Pass Strength</label>
+                <input type="range" id="lowPassStrength" min="0" max="5" step="0.1" value="1.0">
+                <input type="number" id="lowPassValue" value="1.0" step="0.1" min="0" max="5">
+            </div>
+            
+            <div class="control-group">
+                <label for="highPassStrength">High-Pass Strength</label>
+                <input type="range" id="highPassStrength" min="0" max="3" step="0.1" value="1.0">
+                <input type="number" id="highPassValue" value="1.0" step="0.1" min="0" max="3">
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="glCanvas" width="800" height="600"></canvas>
+        </div>
+        
+        <div class="info">
+            <p><strong>How to use:</strong></p>
+            <p>1. <strong>Upload your images:</strong> Choose one image for low-pass filtering (will be blurred) and one for high-pass filtering (edges will be enhanced)</p>
+            <p>2. <strong>Click "Load Uploaded Images"</strong> to process your images</p>
+            <p>3. <strong>Use the controls above</strong> to fine-tune the hybrid effect</p>
+            <p>4. <strong>Toggle between views</strong> to see different stages of processing</p>
+            <p><em>Default images are loaded automatically, but you can replace them with your own!</em></p>
+        </div>
+    </div>
+    
+    <script src="shaders.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
